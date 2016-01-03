@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-$output = shell_exec('ipconfig');
+$output = shell_exec('sudo ifconfig');
 echo "$output";
 echo 'Digite um número: ';
 $a = fgets(STDIN); 
