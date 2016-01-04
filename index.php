@@ -7,52 +7,52 @@ function colorize($text, $status){
 	$out = "";
 	switch ($status) {
 		case "SUCESSO":
-			$out = "[1;32m"; //Green Foreground
+			$out = "[1;32m";		//Cor Verde
 			break;
 		case "ERRO":
-			$out = "[1;31m"; //Red Foreground;
+			$out = "[1;31m";		//Cor Vermelha
 			break;
 		case "NOTA":
-			$out = "[1;33m"; //Blue Foreground;
+			$out = "[1;33m";		//Cor Amarela
 			break;
 		case "OPCAO":
-			$out = "[38;5;166;1m";
+			$out = "[38;5;166;1m";	//Cor Laranja
 			break;
 		case "PERGUNTA":
-			$out = "[38;5;228;1m";
+			$out = "[38;5;228;1m";	//Cor Amarelo Claro
 			break;
 		case "LINHA":
-			$out = "[38;5;208;1m";
+			$out = "[38;5;208;1m";	//Cor Laranja Claro
 			break;
 		default:
-			$out = "[0m"; //Default
+			$out = "[0m";			//Padrão
 			break;
 	}
-	return chr(27) . "$out" . "$text" . chr(27) . "[0m";
+	return chr(27) . "$out" . "$text" . chr(27) . "[0m";	//Imprime cor selecionada
 }
 
-function linha(){
-	echo colorize("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n","LINHA");
-}
+function linha(){																//{
+	echo colorize("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n","LINHA");	//{Imprime linha
+}																				//{
 
-$modos = array('null','Monitor','Managed','' );
+$modos = array('null','Monitor','Managed','' );	//Lista de modos diponíveis
 
-$output = shell_exec('sudo airmon-ng');
-$arr1 = explode("\t", $output);
+$output = shell_exec('sudo airmon-ng');			//Pegando interfaces disponíveis
+$arr1 = explode("\t", $output);					//Separando palavras para busca
 $i = 0;
 $count = 0;
 while ($i <= 10) {
-	$arr2 = array_search("wlan$i", $arr1);
+	$arr2 = array_search("wlan$i", $arr1);		//Filtrando nome da interface
 	if ($arr1[$arr2] == "\nPHY") {
 		
 	}else{
 		$count++;
-		$inter[$count] = $arr1[$arr2];
+		$inter[$count] = $arr1[$arr2];			//Guardando interfaces em um array
 	}
 	$i++;
 }
 
-system('clear');
+system('clear');	//Limpar tela
 
 echo colorize((' _    _  _______  _      __   ____   ______   ______   _       ________
 | \  | \|       \| \    /  \ /    \ |      \ |      \ | \     |        \
@@ -67,21 +67,21 @@ echo colorize("\n[H] Modificador de modo de interface wi-fi\n","NOTA");
 
 linha();
 
-if ($count == 1) {
+if ($count == 1) { 										//Verifica quantas interfaces tem disponível
 	$interface = $inter[$count];
 	echo colorize("\n[!] Somente uma interface disponivel ($interface)\n", "NOTA");
 }else{
 	echo colorize("\n[+] Interfaces Disponíveis [$count]: \n", "NOTA");
 	$a = 1;
 	while ($a <= $count) {
-		echo colorize("\n\t[$a] $inter[$a]\n","OPCAO");
+		echo colorize("\n\t[$a] $inter[$a]\n","OPCAO");	//Lista interfaces
 		$a++;
 	}
 	
 	echo colorize("\n[?] Selecione sua interface: \033[s","PERGUNTA");
-	$interopt = intval(fgets(STDIN));
+	$interopt = intval(fgets(STDIN));	//Usuario entra com sua opção
 	if ($interopt > 0 && $interopt <= $count) {
-		$interface = $inter[$interopt];	
+		$interface = $inter[$interopt];	//Guarda interface selecionada
 		echo "\033[u$interface\n";
 	}else{
 		echo "\033[u###\n";
@@ -92,11 +92,11 @@ if ($count == 1) {
 
 linha();
 
-$countm = intval($modos)+1;
+$countm = intval($modos)+1;							//Conta quantos modos tem salvos
 echo colorize("\n[+] Modos:\n", "NOTA");
 $a = 1;
 while ($modos[$a]) {
-	echo colorize("\n\t[$a] $modos[$a]\n","OPCAO");
+	echo colorize("\n\t[$a] $modos[$a]\n","OPCAO");	//Lista os modos
 	$a++;
 }
 echo colorize("\n[?] Selecione o modo: \033[s","PERGUNTA");
@@ -117,18 +117,18 @@ echo colorize("  Ok!","NOTA");
 	sleep(1);
 
 	echo colorize("\n\n[...] Alterando","NOTA");
-system("sudo ifconfig $interface down");
+system("sudo ifconfig $interface down");		//Desativa (desocupa) interface
 	echo colorize('.',"NOTA");
-system("sudo iwconfig $interface mode $modo");
+system("sudo iwconfig $interface mode $modo");	//Altera seu modo
 	echo colorize('.',"NOTA");
-system("sudo rfkill unblock all");
+system("sudo rfkill unblock all");				//Desbloqueia interface (para evitar erros)
 	echo colorize('.',"NOTA");
-system("sudo ifconfig $interface up");
+system("sudo ifconfig $interface up");			//Ativa interface
 	echo colorize("\n\n[OK] Prontinho =)\n","SUCESSO");
 
 if ($modo == 'monitor') {
 	linha();
-	echo colorize("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA");
+	echo colorize("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA"); 
 	$dump = strtolower(fgets(STDIN));
 	if ($dump == "y\n" || $dump == "\n") {
 		echo "\033[uYes\n";
