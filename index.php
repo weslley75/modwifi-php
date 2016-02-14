@@ -1,9 +1,15 @@
 <?php
-/* 
- * Author: Heyapple
+/**
+ *	@author Heyapple
  */
+function verifica_modo($interface){
+	$output = shell_exec("sudo iwconfig $interface");
+	$arr1 = explode("Mode:", $output);
+	$arr2 = explode(" ", $arr1[1]);
+	return $arr2[0];
+}
 
-function colorize($text, $status){
+function cor($text, $status){
 	$out = "";
 	switch ($status) {
 		case "SUCESSO":
@@ -32,29 +38,25 @@ function colorize($text, $status){
 }
 
 function linha(){																//{
-	echo colorize("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n","LINHA");	//{Imprime linha
+	echo cor("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n","LINHA");			//{Imprime linha
 }																				//{
-
+////////////////////////////////////////////////////////////////////////////////////
+$opcoes = getopt("a::i:m:",array('interface:','modo:'));
 $modos = array('null','Monitor','Managed','' );	//Lista de modos diponíveis
 
-$output = shell_exec('sudo airmon-ng');			//Pegando interfaces disponíveis
-$arr1 = explode("\t", $output);					//Separando palavras para busca
-$i = 0;
+$output = shell_exec('sudo airmon-ng | grep -P "phy[0-90-9]"');			//Pegando interfaces disponíveis
+$arr1 = explode("	", $output);										//Separando palavras para busca
+$i = 1;
 $count = 0;
-while ($i <= 10) {
-	$arr2 = array_search("wlan$i", $arr1);		//Filtrando nome da interface
-	if ($arr1[$arr2] == "\nPHY") {
-		
-	}else{
-		$count++;
-		$inter[$count] = $arr1[$arr2];			//Guardando interfaces em um array
-	}
-	$i++;
+while (isset($arr1[$i])) {
+	$count++;
+	$inter[$count] = $arr1[$i];											//Guardando interfaces em um array
+	$i = $i + 5;
 }
 
 system('clear');	//Limpar tela
 
-echo colorize((' _    _  _______  _      __   ____   ______   ______   _       ________
+echo cor((' _    _  _______  _      __   ____   ______   ______   _       ________
 | \  | \|       \| \    /  \ /    \ |      \ |      \ | \     |        \
 | $  | $| $$$$$$$ \\$\  /   $| $$$$$\| $$$$$$\| $$$$$$\| $     | $$$$$$$
 | $__| $| $__      \\$\/   $ | $__| $| $__/ $$| $__/ $$| $     | $__ 
@@ -63,83 +65,111 @@ echo colorize((' _    _  _______  _      __   ____   ______   ______   _       _
 | $  | $| $______    | $    | $  | $| $      | $      | $____ | $______
 | $  | $| $      \   | $    | $  | $| $      | $      | $    \| $      \
  \\$   \\$ \\$$$$$$$$    \\$     \\$   \\$ \\$       \\$       \\$$$$$$ \\$$$$$$$$'),"NOTA");
-echo colorize("\n[H] Modificador de modo de interface wi-fi\n","NOTA");
+echo cor("\n[H] Modificador de modo de interface wi-fi\n","NOTA");
 
 linha();
-
-if ($count == 1) { 										//Verifica quantas interfaces tem disponível
-	$interface = $inter[$count];
-	echo colorize("\n[!] Somente uma interface disponivel ($interface)\n", "NOTA");
+if (isset($opcoes["i"])) {
+	$interface = $opcoes["i"];
+}elseif (isset($opcoes["interface"])) {
+	$interface = $opcoes["interface"];
 }else{
-	echo colorize("\n[+] Interfaces Disponíveis [$count]: \n", "NOTA");
+	if ($count == 1) { 										//Verifica quantas interfaces tem disponível
+		$interface = $inter[$count];
+		echo cor("\n[!] Somente uma interface disponivel:".chr(27)."[38;5;166;1m"." $interface (".verifica_modo($interface).")\n", "NOTA");
+	}else{
+		echo cor("\n[+] Interfaces Disponíveis [$count]: \n", "NOTA");
+		$a = 1;
+		while ($a <= $count) {
+			echo cor("\n\t[$a] $inter[$a] (".verifica_modo("$inter[$a]").")\n","OPCAO");	//Lista interfaces
+			$a++;
+		}	
+		echo cor("\n[?] Selecione sua interface: \033[s","PERGUNTA");
+		$interopt = intval(fgets(STDIN));	//Usuario entra com sua opção
+		if ($interopt > 0 && $interopt <= $count) {
+			$interface = $inter[$interopt];	//Guarda interface selecionada
+			echo "\033[u$interface\n";
+		}else{
+			echo "\033[u###\n";
+			exit(cor("\n[ERRO] Interface inexistente!\n\n","ERRO"));
+		}	
+	}
+linha();
+}
+$execou = exec("sudo iwconfig '$interface' 2>&1 ",$output,$result);
+if ($result == '0') {
+	//ok
+}else{
+	exit(cor("\n[ERRO] Interface inexistente!\n\n","ERRO"));
+}
+
+
+if (isset($opcoes["m"])) {
+	if ($opcoes["m"] > 0) {
+		$modo = $modos[$opcoes["m"]];
+	}else{
+		$modo = $opcoes["m"];
+	}
+}elseif (isset($opcoes["modo"])) {
+	if ($opcoes["modo"] > 0) {
+		$modo = $modos[$opcoes["modo"]];
+	}else{
+		$modo = $opcoes["modo"];
+	}
+}else{
+	$countm = intval($modos)+1;							//Conta quantos modos tem salvos
+	echo cor("\n[+] Modos:\n", "NOTA");
 	$a = 1;
-	while ($a <= $count) {
-		echo colorize("\n\t[$a] $inter[$a]\n","OPCAO");	//Lista interfaces
+	while ($modos[$a]) {
+		echo cor("\n\t[$a] $modos[$a]\n","OPCAO");	//Lista os modos
 		$a++;
 	}
-	
-	echo colorize("\n[?] Selecione sua interface: \033[s","PERGUNTA");
-	$interopt = intval(fgets(STDIN));	//Usuario entra com sua opção
-	if ($interopt > 0 && $interopt <= $count) {
-		$interface = $inter[$interopt];	//Guarda interface selecionada
-		echo "\033[u$interface\n";
+	echo cor("\n[?] Selecione o modo: \033[s","PERGUNTA");
+	$modoopt = intval(fgets(STDIN));
+	if ($modoopt > 0 && $modoopt <= $countm) {
+		$modo = strtolower($modos[$modoopt]);
+		echo "\033[u".ucfirst($modo) ."\n";
 	}else{
 		echo "\033[u###\n";
-		exit(colorize("\n[ERRO] Interface inexistente!\n\n","ERRO"));
+		exit(cor("\n[ERRO] Modo inválido\n\n","ERRO"));
 	}
+linha();
+}
+if (in_array(ucfirst($modo), $modos)) {
 	
-}
-
-linha();
-
-$countm = intval($modos)+1;							//Conta quantos modos tem salvos
-echo colorize("\n[+] Modos:\n", "NOTA");
-$a = 1;
-while ($modos[$a]) {
-	echo colorize("\n\t[$a] $modos[$a]\n","OPCAO");	//Lista os modos
-	$a++;
-}
-echo colorize("\n[?] Selecione o modo: \033[s","PERGUNTA");
-$modoopt = intval(fgets(STDIN));
-if ($modoopt > 0 && $modoopt <= $countm) {
-	$modo = strtolower($modos[$modoopt]);
-	echo "\033[u".ucfirst($modo) ."\n";
 }else{
-	echo "\033[u###\n";
-	exit(colorize("\n[ERRO] Modo inválido\n\n","ERRO"));
+	exit(cor("\n[ERRO] Modo inválido\n\n","ERRO"));
 }
 
-linha();
 
-echo colorize("\n[!] ".ucfirst($modo)."?", "NOTA");
+echo cor("\n[!] ".ucfirst($modo)."?", "NOTA");
 	sleep(1);
-echo colorize("  Ok!","NOTA");
+echo cor("  Ok!","NOTA");
 	sleep(1);
 
-	echo colorize("\n\n[...] Alterando","NOTA");
+	echo cor("\n\n[...] Alterando","NOTA");
 system("sudo ifconfig $interface down");		//Desativa (desocupa) interface
-	echo colorize('.',"NOTA");
+	echo cor('.',"NOTA");
 system("sudo iwconfig $interface mode $modo");	//Altera seu modo
-	echo colorize('.',"NOTA");
+	echo cor('.',"NOTA");
 system("sudo rfkill unblock all");				//Desbloqueia interface (para evitar erros)
-	echo colorize('.',"NOTA");
+	echo cor('.',"NOTA");
 system("sudo ifconfig $interface up");			//Ativa interface
-	echo colorize("\n\n[OK] Prontinho =)\n","SUCESSO");
+	echo cor("\n\n[OK] Prontinho =)\n","SUCESSO");
 
 if ($modo == 'monitor') {
 	linha();
-	echo colorize("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA"); 
+	echo cor("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA"); 
 	$dump = strtolower(fgets(STDIN));
 	if ($dump == "y\n" || $dump == "\n") {
 		echo "\033[uYes\n";
-		echo colorize("\n[!] Ok! Um segundo!", "SUCESSO");
+		echo cor("\n[!] Ok! Um segundo!", "SUCESSO");
 			sleep(1);
 		system("sudo airodump-ng $interface --wps --uptime");
 	}elseif ($dump == "n\n") {
 		echo "\033[uNope\n";
-		echo colorize("\n[!] Ok! Bye!\n\n", "NOTA");
+		echo cor("\n[!] Ok! Bye!\n\n", "NOTA");
 	}else{
 		echo "\033[u###\n";
-		echo colorize("\n[ERRO] Opção Inválida!\n", "ERRO");
+		echo cor("\n[ERRO] Opção Inválida!\n", "ERRO");
 	}
 }
