@@ -2,3 +2,5 @@ language: php
 dist: precise
 os: linux
 sudo: required
+before_script:
+  - ./install.sh
