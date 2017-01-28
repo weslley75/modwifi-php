@@ -1,3 +1,4 @@
-# Tell Travis CI we're using PHP
 language: php
+dist: precise
+os: linux
 sudo: required
