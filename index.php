@@ -1,12 +1,12 @@
-#!/usr/bin/php
 <?php
 /**
  *	@author Heyapple
  */
 function verifica_modo($interface){
 	$output = shell_exec("sudo iwconfig $interface");
-	preg_match('/Mode:(.*?) /s',$output,$arr2);
-	return $arr2[1];
+	$arr1 = explode("Mode:", $output);
+	$arr2 = explode(" ", $arr1[1]);
+	return $arr2[0];
 }
 
 function cor($text, $status){
@@ -45,14 +45,13 @@ $opcoes = getopt("a::i:m:",array('interface:','modo:'));
 $modos = array('null','Monitor','Managed','' );	//Lista de modos diponíveis
 
 $output = shell_exec('sudo airmon-ng | grep -P "phy[0-90-9]"');			//Pegando interfaces disponíveis
-preg_match_all('/(.*?)		.*? 	.*?\]\n/s',$output,$arr1);										//Separando palavras para busca
-$i = 0;
+$arr1 = explode("	", $output);										//Separando palavras para busca
+$i = 1;
 $count = 0;
-$limit = count($arr1[1]);
-while ($count < $limit) {
+while (isset($arr1[$i])) {
 	$count++;
-	$inter[$count] = $arr1[1][$i];											//Guardando interfaces em um array
-	$i++;
+	$inter[$count] = $arr1[$i];											//Guardando interfaces em um array
+	$i = $i + 5;
 }
 
 system('clear');	//Limpar tela
@@ -60,7 +59,7 @@ system('clear');	//Limpar tela
 echo cor((' _    _  _______  _      __   ____   ______   ______   _       ________
 | \  | \|       \| \    /  \ /    \ |      \ |      \ | \     |        \
 | $  | $| $$$$$$$ \\$\  /   $| $$$$$\| $$$$$$\| $$$$$$\| $     | $$$$$$$
-| $__| $| $__      \\$\/   $ | $__| $| $__/ $$| $__/ $$| $     | $__
+| $__| $| $__      \\$\/   $ | $__| $| $__/ $$| $__/ $$| $     | $__ 
 | $    $| $  \      \\$   $  | $    $| $    $$| $    $$| $     | $  \
 | $$$$$$| $$$$       \\$$$   | $$$$$$| $$$$$$ | $$$$$$ | $     | $$$$
 | $  | $| $______    | $    | $  | $| $      | $      | $____ | $______
@@ -83,7 +82,7 @@ if (isset($opcoes["i"])) {
 		while ($a <= $count) {
 			echo cor("\n\t[$a] $inter[$a] (".verifica_modo("$inter[$a]").")\n","OPCAO");	//Lista interfaces
 			$a++;
-		}
+		}	
 		echo cor("\n[?] Selecione sua interface: \033[s","PERGUNTA");
 		$interopt = intval(fgets(STDIN));	//Usuario entra com sua opção
 		if ($interopt > 0 && $interopt <= $count) {
@@ -92,7 +91,7 @@ if (isset($opcoes["i"])) {
 		}else{
 			echo "\033[u###\n";
 			exit(cor("\n[ERRO] Interface inexistente!\n\n","ERRO"));
-		}
+		}	
 	}
 linha();
 }
@@ -136,7 +135,7 @@ if (isset($opcoes["m"])) {
 linha();
 }
 if (in_array(ucfirst($modo), $modos)) {
-
+	
 }else{
 	exit(cor("\n[ERRO] Modo inválido\n\n","ERRO"));
 }
@@ -159,7 +158,7 @@ system("sudo ifconfig $interface up");			//Ativa interface
 
 if ($modo == 'monitor') {
 	linha();
-	echo cor("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA");
+	echo cor("\n[?] Airodump?[Y/n]: \033[s", "PERGUNTA"); 
 	$dump = strtolower(fgets(STDIN));
 	if ($dump == "y\n" || $dump == "\n") {
 		echo "\033[uYes\n";
